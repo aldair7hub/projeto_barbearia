@@ -1,0 +1,92 @@
+/* Estilo geral para a página de login */
+.container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center; /* Alinha o conteúdo no centro verticalmente */
+    height: 100vh; /* Preenche toda a altura da tela */
+    background-color: #f4f4f9; /* Cor de fundo suave */
+    padding: 20px;
+    box-sizing: border-box; /* Garante que o padding não afete o tamanho total */
+  }
+  
+  h2 {
+    color: #34495e; /* Cor do título */
+    font-size: 24px;
+    margin-bottom: 20px;
+  }
+  
+  /* Estilo para o formulário */
+  form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px; /* Espaçamento entre os campos do formulário */
+    width: 100%;
+    max-width: 400px; /* Tamanho máximo do formulário */
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Sombra sutil */
+  }
+  
+  /* Estilo para os campos de entrada */
+  input {
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    width: 100%; /* Para que os campos ocupem a largura inteira */
+    box-sizing: border-box; /* Garantir que o padding não afete o tamanho total */
+    transition: border-color 0.3s;
+  }
+  
+  input:focus {
+    border-color: #1abc9c; /* Cor de destaque ao focar no campo */
+    outline: none; /* Remove o contorno padrão do campo */
+  }
+  
+  /* Estilo para o botão de login */
+  button {
+    padding: 12px;
+    background-color: #1abc9c;
+    color: white;
+    font-size: 16px;
+    font-weight: 500;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  
+  button:hover {
+    background-color: #16a085; /* Cor mais escura no hover */
+  }
+  
+  /* Estilo para o link de registro */
+  p {
+    font-size: 14px;
+    text-align: center;
+  }
+  
+  p a {
+    color: #1abc9c; /* Cor do link de registro */
+    text-decoration: none;
+    font-weight: 500;
+  }
+  
+  p a:hover {
+    text-decoration: underline; /* Sublinha o link no hover */
+  }
+  
+  /* Responsividade para dispositivos móveis */
+  @media (max-width: 768px) {
+    .container {
+      justify-content: center; /* Garante que o conteúdo fique no centro mesmo em telas pequenas */
+    }
+  
+    form {
+      width: 90%; /* Torna o formulário um pouco mais estreito em telas menores */
+      max-width: 350px; /* Reduz um pouco o tamanho máximo do formulário */
+    }
+  }
+  

@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_APP=app.py
+      - FLASK_RUN_HOST=0.0.0.0
+    depends_on:
+      - frontend
+      - mongodb  # O backend depende do MongoDB
+    networks:
+      - app-network
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    ports:
+      - "8080:8080"
+    networks:
+      - app-network
+
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: secretkey
+    ports:
+      - "27017:27017"
+    volumes:
+      - /data/mongodb:/data/db  # Caminho absoluto no host para persistência dos dados
+      - ./mongod.conf:/etc/mongod.conf  # Arquivo de configuração personalizado
+    command: ["mongod", "--config", "/etc/mongod.conf"]  # Usa o arquivo de configuração personalizado
+    restart: always  # Política de reinício
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  mongo-data:
+    driver: local

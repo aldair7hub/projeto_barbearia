@@ -1,0 +1,77 @@
+/* Container principal do componente de agendamentos */
+.appointment-list-container {
+    background-color: #ffffff;
+    padding: 40px;
+    text-align: center;
+    font-family: 'Arial', sans-serif;
+    max-width: 800px;
+    margin: 0 auto; /* Centraliza o conteúdo */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+  }
+  
+  /* Título principal dos agendamentos */
+  h3 {
+    font-size: 32px;
+    color: #2c3e50;
+    margin-bottom: 20px;
+    font-weight: bold;
+  }
+  
+  /* Lista de agendamentos */
+  ul {
+    list-style-type: none; /* Remove os pontos da lista */
+    padding: 0;
+  }
+  
+  ul li {
+    background-color: #f9f9f9; /* Cor de fundo suave para cada item */
+    border: 1px solid #ddd; /* Borda sutil */
+    padding: 15px;
+    margin: 10px 0;
+    border-radius: 8px;
+    font-size: 18px;
+    color: #333;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  ul li:hover {
+    background-color: #ecf0f1; /* Muda a cor de fundo ao passar o mouse */
+    cursor: pointer;
+  }
+  
+  /* Estilo para as informações do agendamento */
+  ul li span {
+    font-weight: normal;
+    color: #7f8c8d;
+  }
+  
+  /* Estilo para a mensagem de erro */
+  .alert-danger {
+    background-color: #f8d7da;
+    color: #721c24;
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 5px;
+    font-size: 16px;
+  }
+  
+  /* Responsividade para telas menores */
+  @media (max-width: 768px) {
+    .appointment-list-container {
+      padding: 20px;
+    }
+  
+    h3 {
+      font-size: 28px;
+    }
+  
+    ul li {
+      font-size: 16px;
+    }
+  }
+
+  
+  
