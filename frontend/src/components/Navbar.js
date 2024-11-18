@@ -1,51 +1,52 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { getUserRoles } from '../services/api'; // Importar a função de verificar o role
+import { getUserRoles, getUserPoints } from '../services/api';
 import './Navbar.css';
 
 const Navbar = () => {
   const token = localStorage.getItem('token');
-  const userID = localStorage.getItem('user_id'); 
-  const [role, setRole] = useState(null); // Estado para armazenar o role
-  const [loading, setLoading] = useState(true); // Estado para controlar o carregamento
+  const userID = localStorage.getItem('user_id');
+  const [role, setRole] = useState(null);
+  const [points, setPoints] = useState(null);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  // Função para checar o role do usuário
   useEffect(() => {
-    const fetchUserRole = async () => {
+    const fetchUserData = async () => {
       if (token) {
         try {
-          const response = await getUserRoles(token);  // Faz a chamada para obter o role
-          const userRole = response.role;  // Supondo que a resposta retorne o papel como `role`
+          const roleResponse = await getUserRoles(token);
+          const userRole = roleResponse.role;
           setRole(userRole);
-          localStorage.setItem('role', userRole);  // Armazena o role no localStorage
+          localStorage.setItem('role', userRole);
 
-          // Redirecionar para página de acordo com o role
+          const pointsResponse = await getUserPoints(token);
+          const userPoints = pointsResponse.points;
+          setPoints(userPoints);
+
           if (userRole === 'barber') {
-            navigate(`/barberPage`);  // Se for barbeiro, redireciona para a página de agenda do barbeiro
+            navigate(`/barberPage`);
           }
-
         } catch (error) {
-          console.error("Erro ao buscar role do usuário:", error);
+          console.error("Erro ao buscar role ou pontos do usuário:", error);
         } finally {
-          setLoading(false); // Finaliza o carregamento após a verificação
+          setLoading(false);
         }
       } else {
-        setLoading(false); // Se não houver token, não precisa esperar a verificação do role
+        setLoading(false);
       }
     };
 
-    fetchUserRole();
-  }, [token, userID, navigate]);  // Chama o useEffect quando o token muda
+    fetchUserData();
+  }, [token, userID, navigate]);
 
   const handleLogout = () => {
-    localStorage.removeItem('token'); 
+    localStorage.removeItem('token');
     localStorage.removeItem('user_id');
-    localStorage.removeItem('role');  // Remover o role do localStorage
+    localStorage.removeItem('role');
     window.location.href = '/';
   };
 
-  // Exibe "Carregando..." até que o role do usuário seja determinado
   if (loading) {
     return <p>Carregando...</p>;
   }
@@ -56,7 +57,7 @@ const Navbar = () => {
         {!token ? (
           <>
             <Link to="/login" className="login-btn">Login</Link>
-            <Link to="/">Home</Link> {/* Home agora abaixo do Login */}
+            <Link to="/">Home</Link>
           </>
         ) : (
           <>
@@ -64,6 +65,16 @@ const Navbar = () => {
               <>
                 <Link to="/dashboard">Agendar Serviços</Link>
                 <Link to={`/appointments/${userID}`}>Meus Agendamentos</Link>
+                {points !== null && (
+                  <div className="user-points">
+                    <span>Pontos: {points}</span>
+                  </div>
+                )}
+              </>
+            )}
+            {role === 'barber' && (
+              <>
+                <Link to="/barberPage">Página do Barbeiro</Link>
               </>
             )}
           </>

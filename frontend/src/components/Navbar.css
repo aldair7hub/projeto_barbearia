@@ -2,94 +2,117 @@
 nav {
   background-color: #34495e; /* Cor de fundo escura */
   color: #ecf0f1; /* Texto claro */
-  padding: 10px 20px; /* Menos espaçamento interno para reduzir o tamanho */
+  padding: 12px 20px;
   display: flex;
-  justify-content: space-between; /* Espaçamento entre os elementos */
-  align-items: center; /* Centraliza os itens verticalmente */
-  border-bottom: 1px solid #2c3e50; /* Linha mais fina abaixo da navbar */
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 2px solid #2c3e50; /* Linha mais visível abaixo da navbar */
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* Sombra suave */
+  transition: background-color 0.3s ease-in-out; /* Transição suave */
+}
+
+nav:hover {
+  background-color: #2c3e50; /* Cor de fundo mais escura ao passar o mouse */
 }
 
 /* Estilo para o container das links de navegação */
 .nav-links {
   display: flex;
-  flex-direction: column; /* Alinha os links em coluna */
-  gap: 10px; /* Espaçamento entre os links */
-  width: 100%; /* Faz os links ocuparem toda a largura */
+  flex-direction: row;
+  gap: 20px; /* Espaçamento maior entre os links */
 }
 
 .nav-links a {
-  text-decoration: none; /* Remove o sublinhado */
-  color: #ecf0f1; /* Cor do texto dos links */
-  font-size: 16px; /* Menor tamanho de fonte */
-  font-weight: 400; /* Peso normal para o texto */
-  padding: 8px 12px; /* Reduz o padding */
-  border-radius: 5px; /* Bordas arredondadas para os links */
-  transition: background-color 0.3s, color 0.3s; /* Transição suave para a mudança de cor */
+  text-decoration: none;
+  color: #ecf0f1;
+  font-size: 16px;
+  font-weight: 500; /* Peso mais forte para destaque */
+  padding: 10px 14px; /* Ajuste do padding para aumentar o tamanho */
+  border-radius: 5px;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .nav-links a:hover {
-  color: #1abc9c; /* Cor de destaque ao passar o mouse */
-  background-color: #2c3e50; /* Fundo sutil ao passar o mouse */
+  color: #1abc9c;
+  background-color: #2c3e50;
 }
 
 /* Estilo para o botão de login */
 .login-btn {
-  background-color: #1abc9c; /* Cor de fundo do botão de login */
-  color: white; /* Texto branco */
-  padding: 8px 12px; /* Tamanho consistente com os links */
-  border-radius: 5px; /* Bordas arredondadas */
-  font-size: 16px; /* Tamanho da fonte */
-  font-weight: 500; /* Peso mais forte para destacar */
-  transition: background-color 0.3s, color 0.3s; /* Transição suave */
+  background-color: #1abc9c;
+  color: white;
+  padding: 10px 16px;
+  border-radius: 5px;
+  font-size: 16px;
+  font-weight: 600;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .login-btn:hover {
-  background-color: #16a085; /* Cor de fundo mais escura ao passar o mouse */
-  color: #ecf0f1; /* Mantém o texto claro no hover */
+  background-color: #16a085;
 }
 
 /* Estilo para o botão de logout */
 .logout-btn {
-  background-color: #e74c3c; /* Cor de fundo vermelha */
-  color: white; /* Texto branco */
-  padding: 8px 12px; /* Reduz o padding para o botão */
+  background-color: #e74c3c;
+  color: white;
+  padding: 10px 14px;
   border: none;
-  border-radius: 5px; /* Bordas arredondadas */
-  font-size: 14px; /* Reduz o tamanho da fonte */
-  cursor: pointer; /* Cursor em forma de mão */
-  transition: background-color 0.3s; /* Transição suave para a cor de fundo */
+  border-radius: 5px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
 }
 
 .logout-btn:hover {
-  background-color: #c0392b; /* Cor mais escura quando passar o mouse */
+  background-color: #c0392b;
 }
 
 .logout-btn:focus {
-  outline: none; /* Remove o contorno do botão ao focar */
+  outline: none;
 }
+
+/* Estilo para o badge de pontos */
+.user-points {
+  font-size: 16px;
+  font-weight: 600;
+  background-color: #f39c12;
+  padding: 5px 15px; /* Ajustando o padding para dar mais espaço ao redor do texto */
+  border-radius: 20px;
+  color: #34495e;
+  display: flex; /* Usando flexbox para centralizar */
+  align-items: center; /* Alinha verticalmente */
+  justify-content: center; /* Alinha horizontalmente */
+  margin-left: 20px;
+  transition: transform 0.3s ease;
+}
+
+.user-points:hover {
+  transform: scale(1.1); /* Animação de aumento de tamanho */
+}
+
 
 /* Responsividade para dispositivos móveis */
 @media (max-width: 768px) {
   nav {
-    padding: 10px; /* Menos padding na navbar */
-    flex-direction: column; /* Coloca os itens em coluna */
-    align-items: flex-start; /* Alinha os itens à esquerda */
-    justify-content: center; /* Centraliza os itens verticalmente */
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 15px;
   }
 
   .nav-links {
-    flex-direction: column; /* Coloca os links em coluna */
-    gap: 10px; /* Menos espaço entre os links */
-    width: 100%; /* Deixa os links com largura 100% */
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
   }
 
   .nav-links a {
-    padding: 6px 10px; /* Menor padding nos links */
-    font-size: 14px; /* Menor tamanho de fonte */
+    padding: 8px 12px;
+    font-size: 14px;
   }
 
   .logout-btn {
-    margin-top: 15px; /* Adiciona espaço acima do botão de logout */
-    width: 100%; /* Deixa o botão ocupar toda a largura disponível */
+    margin-top: 15px;
+    width: 100%;
   }
 }

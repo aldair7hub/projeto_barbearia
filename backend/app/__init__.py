@@ -13,7 +13,7 @@ app = Flask(__name__)
 
 # Configurar CORS para permitir acesso apenas de localhost:3000
 CORS(app, resources={r"/*": {
-    "origins": "*",  # Permitir apenas o domínio localhost:3000
+    "origins": "*",
     "allow_headers": ["Content-Type", "Authorization"],  # Permitir cabeçalhos como Content-Type e Authorization
     "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],  # Permitir os métodos HTTP necessários
     "supports_credentials": True  # Permitir o uso de cookies/credenciais se necessário
@@ -26,7 +26,17 @@ jwt = JWTManager(app)
 # Conectar ao MongoDB
 mongo_uri = os.getenv('MONGO_URI')
 client = MongoClient(mongo_uri)
-db = client.get_database()
+
+# Testar a conexão com o MongoDB
+try:
+    client.admin.command('ping')
+    print("Conexão com o MongoDB bem-sucedida!")
+except Exception as e:
+    print(f"Erro ao conectar ao MongoDB: {e}")
+    exit(1)
+
+# Acessar o banco de dados
+db = client['barberapp']  # Especificando explicitamente o banco de dados
 app.db = db  # Tornar o db acessível em todo o app
 
 # Endpoint para verificar se o servidor está ativo
@@ -47,4 +57,3 @@ app.register_blueprint(appointment_routes_bp)
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)  # Escuta em todas as interfaces de rede
-

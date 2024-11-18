@@ -1,0 +1,79 @@
+/* Estilos gerais para a página BarberPage */
+.barber-page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background-color: #f4f4f9;
+    min-height: 100vh;  /* Garantir que a página ocupe toda a altura da tela */
+  }
+  
+  h1 {
+    font-size: 24px;
+    color: #333;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+  
+  /* Estilos para o container dos agendamentos */
+  .appointment-list {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 800px;  /* Limitar a largura máxima */
+    margin-top: 20px;
+  }
+  
+  /* Estilo para o caso de não haver agendamentos */
+  .no-appointments {
+    font-size: 18px;
+    color: #666;
+    text-align: center;
+  }
+  
+  /* Garantir que o card de agendamento tenha um layout legal e responsivo */
+  .appointment-card {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    margin: 10px 0;
+    width: 100%;
+    max-width: 600px;
+    transition: box-shadow 0.3s ease;
+  }
+  
+  .appointment-card:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  }
+  
+  .appointment-card h3 {
+    font-size: 20px;
+    margin: 5px 0;
+    color: #333;
+  }
+  
+  .appointment-card p {
+    font-size: 14px;
+    margin: 5px 0;
+    color: #666;
+  }
+  
+  .appointment-card strong {
+    color: #333;
+  }
+  
+  /* Estilos responsivos */
+  @media (max-width: 600px) {
+    .appointment-card {
+      width: 100%;
+      padding: 15px;
+    }
+  
+    h1 {
+      font-size: 22px;
+    }
+  }
+  

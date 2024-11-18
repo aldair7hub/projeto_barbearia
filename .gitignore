@@ -1,0 +1,41 @@
+# Node.js
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# React build output
+/build
+/dist
+
+# Flask
+venv/
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+instance/
+*.db
+*.sqlite3
+
+# PyCharm
+.idea/
+
+# VS Code
+.vscode/
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+
+# Flask migrations folder
+migrations/
+
+# Logs
+logs/
+*.log
+
+# Temporary files
+tmp/
+*.swp

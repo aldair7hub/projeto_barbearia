@@ -1,75 +1,84 @@
-/* Container principal da página inicial */
+/* Container da página inicial */
 .homepage {
   background-color: #fafafa; /* Fundo claro para a página */
-  padding: 50px 30px; /* Espaçamento mais equilibrado */
+  padding: -50px 50px; /* Espaçamento mais equilibrado */
   text-align: center; /* Centraliza o texto */
   font-family: 'Arial', sans-serif;
-  max-width: 1000px;
-  margin: 20px auto; /* Reduz a margem inferior e a mantém centralizada horizontalmente */
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Sombra mais suave */
-  border-radius: 10px;
-
-  /* Flexbox para centralizar o conteúdo */
+  min-height: 100vh; /* Ocupa a altura total da janela */
   display: flex;
-  flex-direction: column; /* Organiza os itens na vertical */
-  justify-content: flex-start; /* Faz o conteúdo começar do topo */
+  flex-direction: column; /* Organiza os itens verticalmente */
+  justify-content: center; /* Centraliza verticalmente */
   align-items: center; /* Centraliza horizontalmente */
-  min-height: 100vh; /* Faz o contêiner ocupar a altura total da janela */
-  padding-top: 80px; /* Ajusta a distância do topo */
 }
 
-/* Título principal */
-h1 {
-  font-size: 36px;
-  color: #2c3e50;
-  margin-bottom: 30px; /* Aumenta o espaço abaixo do título */
-  text-transform: uppercase;
-  font-weight: bold;
+/* Grid de imagens para o mosaico */
+.image-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); /* Define 3 colunas */
+  gap: 15px; /* Espaçamento entre as imagens */
+  margin-top: 40px; /* Espaço entre o grid e o conteúdo superior */
+  justify-content: center; /* Centraliza as colunas no meio da página */
+  width: 100%; /* Faz o grid ocupar toda a largura disponível */
+  max-width: 1000px; /* Define a largura máxima */
+  opacity: 0; /* Inicia com opacidade 0 */
+  animation: fadeInGrid 1s forwards; /* Animação para o fade-in da grade */
 }
 
-/* Subtítulo */
-p {
-  font-size: 20px;
-  color: #5d6d7e; /* Contraste ligeiramente aumentado para melhor legibilidade */
-  margin-top: 15px; /* Aumenta o espaçamento superior */
-  font-weight: normal;
+/* Animação para o fade-in da grade de imagens */
+@keyframes fadeInGrid {
+  to {
+    opacity: 1; /* Aparecer suavemente */
+  }
 }
 
+/* Estilização das imagens */
 .barber-image {
   width: 100%; /* A imagem ocupa 100% da largura do contêiner */
-  max-width: 600px; /* Limita a largura máxima da imagem */
-  height: auto; /* Mantém a proporção */
-  margin-top: 20px; /* Ajusta o espaçamento */
+  height: 200px; /* Define uma altura fixa para as imagens */
+  object-fit: cover; /* Garante que a imagem cubra todo o espaço sem distorcer */
+  border-radius: 10px; /* Bordas arredondadas para as imagens */
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Sombra mais suave */
+  opacity: 0; /* Inicialmente invisível */
+  transform: translateY(20px); /* Move ligeiramente para baixo no início */
+  animation: fadeInImage 1.5s forwards ease-in-out; /* Animação de fade-in com transição */
+  transition: transform 0.3s ease, opacity 0.3s ease; /* Transição suave ao passar o mouse */
+}
+
+/* Animação para fade-in das imagens */
+@keyframes fadeInImage {
+  to {
+    opacity: 1; /* Imagem aparece gradualmente */
+    transform: translateY(0); /* Retorna à posição original */
+  }
+}
+
+/* Efeito hover nas imagens */
+.barber-image:hover {
+  transform: scale(1.05); /* Aumenta ligeiramente a imagem ao passar o mouse */
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); /* Sombra mais intensa no hover */
+  transition: transform 0.3s ease, box-shadow 0.3s ease; /* Suaviza a transição */
 }
 
 /* Responsividade para telas menores */
 @media (max-width: 768px) {
-  .homepage {
-    padding: 30px 20px; /* Reduz o padding em telas menores */
-    margin: 20px auto;
+  .image-grid {
+    grid-template-columns: repeat(2, 1fr); /* Define 2 colunas em telas menores */
   }
 
-  h1 {
-    font-size: 28px;
-  }
-
-  p {
-    font-size: 18px;
+  .barber-image {
+    height: 150px; /* Reduz a altura das imagens em telas menores */
+    animation: fadeInImage 1s forwards ease-in-out;
   }
 }
 
 /* Responsividade para telas muito pequenas (ex: smartphones) */
 @media (max-width: 480px) {
-  .homepage {
-    padding: 20px 15px; /* Reduz ainda mais o padding em telas menores */
+  .image-grid {
+    grid-template-columns: repeat(1, 1fr); /* Define 1 coluna em telas muito pequenas */
   }
 
-  h1 {
-    font-size: 24px; /* Reduz o tamanho do título */
-  }
-
-  p {
-    font-size: 16px; /* Ajusta o tamanho da fonte dos parágrafos */
+  .barber-image {
+    height: 120px; /* Ajusta a altura das imagens em telas muito pequenas */
+    animation: fadeInImage 0.8s forwards ease-in-out;
   }
 }

@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'http://0.0.0.0:5000'; // Substitua pela URL real da sua API
+const API_URL = 'http://localhost:5000'; // Substitua pela URL real da sua API
 
 // Função genérica para fazer chamadas POST para a API
 const postRequest = async (endpoint, data, token = '') => {
@@ -95,7 +95,6 @@ export const getAppointments = (token) => {
 
 // Função para criar um novo agendamento
 export const createAppointment = (token, appointmentData) => {
-  console.log(appointmentData)
   return postRequest('/appointments/add', appointmentData, token);  // Passando o token para o postRequest
 };
 
@@ -121,6 +120,81 @@ export const getBarberAppointments = (token, barberId) => {
 export const getUserAppointments = (token, userID) => {
   return getRequest(`/user/appointments/user/${userID}`, token);
 }
+
+// Função para pegar os pontos do usuário
+export const getUserPoints = (token) => {
+  return getRequest('/user/points', token);
+};
+
+// Função para resgatar um serviço gratuito
+export const redeemFreeService = (token) => {
+  return postRequest('/user/redeem_free_service', {}, token);
+};
+
+// Função para resgatar um serviço gratuito específico
+export const redeemFreeServiceChoice = (token, serviceId, barberID) => {
+  // Agora estamos enviando o barberID no corpo da requisição
+  return postRequest(
+    `/user/redeem_free_service/${serviceId}`, 
+    { barber_id: barberID },  // Barber ID adicionado no corpo
+    token
+  );
+};
+
+
+export const completeAppointmentAndGetPoints = async (token, appointmentId) => {
+  // Chama a função genérica postRequest com os parâmetros apropriados
+  const response = await postRequest(
+    '/user/complete_appointment', 
+    { appointment_id: appointmentId }, 
+    token
+  );
+
+  // Verifica se a resposta tem um status de sucesso e retorna os dados
+  if (response.status === 'success') {
+    return response; // Retorna os dados de sucesso, incluindo a mensagem
+  } else {
+    // Caso a resposta não seja de sucesso, retorna o erro
+    return { error: response.msg || 'Erro ao completar o agendamento' };
+  }
+};
+
+
+
+
+// Obter pontos do usuário
+export const checkPoints = async (token) => {
+  const pointsData = await getUserPoints(token);
+  if (pointsData.error) {
+    console.log('Erro ao buscar pontos:', pointsData.error);
+    return;
+  }
+
+  const points = pointsData.points;
+  //console.log('Pontos disponíveis:', points);
+
+  if (points >= 100) {
+    // Se o usuário tiver pontos suficientes, resgatar um serviço gratuito
+    const freeServiceData = await redeemFreeService(token);
+    if (freeServiceData.error) {
+      console.log('Erro ao listar serviços gratuitos:', freeServiceData.error);
+      return;
+    }
+
+    console.log('Serviços gratuitos disponíveis:', freeServiceData.services);
+    // Escolher um serviço para resgatar
+    const serviceId = freeServiceData.services[0]._id;  // Exemplo de selecionar o primeiro serviço
+    const redeemResponse = await redeemFreeServiceChoice(token, serviceId);
+    if (redeemResponse.error) {
+      console.log('Erro ao resgatar o serviço gratuito:', redeemResponse.error);
+    } else {
+      console.log('Serviço gratuito resgatado com sucesso!', redeemResponse);
+    }
+  } else {
+    console.log('Não tem pontos suficientes para resgatar um serviço gratuito.');
+  }
+};
+
 
 export const getBarberId = async (username, token) => {
   try {

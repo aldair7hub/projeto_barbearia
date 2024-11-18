@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify, request
 from werkzeug.security import generate_password_hash, check_password_hash
-from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
+from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity, decode_token
 import datetime
 from app import app
 from bson import ObjectId 
@@ -12,36 +12,8 @@ users_collection = app.db['users']  # Garantir que estamos acessando a coleção
 appointments_collection = app.db['appointments']
 services_collection = app.db['services']
 
-@bp.route('/register', methods=['POST'])
-def register():
-    data = request.get_json()
-    email = data.get('email')
-    password = data.get('password')
-    fullname = data.get('fullname')
-    role = data.get('role')  # 'user' para cliente, 'barber' para barbeiro
 
-    # Validação de entrada
-    if not email or not password or not fullname or not role:
-        return jsonify({"msg": "Email, password, fullname, and role required"}), 400
-
-    if role not in ['user', 'barber']:
-        return jsonify({"msg": "Invalid role. Must be 'user' or 'barber'"}), 400
-
-    # Verifica se o email já está registrado
-    if users_collection.find_one({"email": email}):
-        return jsonify({"msg": "User already exists with this email"}), 409
-    
-    # Hash da senha e inserção no banco de dados
-    hashed_password = generate_password_hash(password)
-    users_collection.insert_one({
-        "email": email,
-        "password": hashed_password,
-        "fullname": fullname,
-        "role": role
-    })
-    
-    return jsonify({"msg": "User registered successfully!"}), 201
-
+from datetime import timedelta
 
 @bp.route('/login', methods=['POST'])
 def login():
@@ -57,27 +29,82 @@ def login():
 
     if user and check_password_hash(user['password'], password):
         # Gera o token JWT com um tempo de expiração
-        expires = datetime.timedelta(hours=1)
+        expires = timedelta(hours=1)
         access_token = create_access_token(
-            identity={
-                'id': str(user['_id']),
-                'email': user['email'],
-                'role': user['role']
-            },
-            expires_delta=expires
+            identity=str(user['_id']),  # ID do usuário como string
+            expires_delta=expires,
+            additional_claims={"role": user['role']}  # Incluindo o role como claim adicional
         )
-        # Retorna o token e o id do usuário
-        return jsonify(access_token=access_token, user_id=str(user['_id'])), 200
+        
+        # Decodifica o token JWT para acessar os dados
+        decoded_token = decode_token(access_token)
+        
+        # Retorna o token, o user_id e o role do usuário
+        return jsonify({
+            "access_token": access_token,
+            "user_id": decoded_token['sub'],  # Acessa o 'sub' para obter o user_id do token
+            "role": decoded_token['role'],  # Acessa o 'role' do token
+            "decoded_token": decoded_token
+        }), 200
     else:
         return jsonify({"msg": "Invalid email or password"}), 401
+
+
+@bp.route('/register', methods=['POST'])
+def register():
+    data = request.get_json()
+    email = data.get('email')
+    password = data.get('password')
+    fullname = data.get('fullname')
+    role = data.get('role')  # 'user' para cliente, 'barber' para barbeiro
+
+    # Validação de entrada
+    if not email or not password or not fullname or not role:
+        return jsonify({"msg": "Email, password, fullname, and role required"}), 400
+
+    if role not in ['user', 'barber']:
+        return jsonify({"msg": "Invalid role. Must be 'user' or 'barber'}"}), 400
+
+    # Verifica se o email já está registrado
+    if users_collection.find_one({"email": email}):
+        return jsonify({"msg": "User already exists with this email"}), 409
+    
+    # Hash da senha e inserção no banco de dados
+    hashed_password = generate_password_hash(password)
+    
+    user_data = {
+        "email": email,
+        "password": hashed_password,
+        "fullname": fullname,
+        "role": role,
+    }
+    
+    # Só adiciona "points" para usuários
+    if role == 'user':
+        user_data["points"] = 0  # Inicializa com 0 pontos para usuários
+    
+    # Insere o novo usuário no banco de dados
+    users_collection.insert_one(user_data)
+    
+    return jsonify({"msg": "User registered successfully!"}), 201
+
 
 
 @bp.route('/appointments/barber/<barber_id>', methods=['GET'])
 @jwt_required()  # Protege a rota com a necessidade de autenticação
 def get_barber_appointments(barber_id):
-    current_user = get_jwt_identity()  # Pega o payload do JWT
-    role = current_user['role']
+    user_id = get_jwt_identity()  # Pega o ID do usuário autenticado do token
+    
+    # Buscar o usuário no banco de dados
+    user = app.db.users.find_one({"_id": ObjectId(user_id)})
+    
+    if not user:
+        return jsonify({"msg": "User not found"}), 404
+    
+    # Acessar o role do usuário
+    role = user.get('role')
 
+    # Verificar se o usuário tem permissão
     if role not in ['barber', 'user']:  # Permitir acesso apenas a barbeiros e usuários
         return jsonify({"msg": "Access forbidden: Insufficient permissions"}), 403
 
@@ -124,13 +151,20 @@ def get_barber_appointments(barber_id):
     return jsonify(appointments=appointments_list), 200
 
 
+
 @bp.route('/appointments/user/<user_id>', methods=['GET'])
 @jwt_required()  # Protege a rota com a necessidade de autenticação
 def get_user_appointments(user_id):
-    # Verificando se o usuário autenticado é o mesmo que está solicitando os agendamentos
-    current_user = get_jwt_identity()  # Pega o payload do JWT
-    if current_user['id'] != user_id and current_user['role'] != 'user':  # Permite que admins vejam qualquer agendamento
-        return jsonify({"msg": "Access forbidden: You can only view your own appointments"}), 403
+    # Pega o user_id do JWT
+    current_user_id = get_jwt_identity()
+
+    # Verificar se o usuário autenticado é o mesmo que está solicitando os agendamentos
+    if current_user_id != user_id:
+        # Buscar o usuário no banco para verificar se é um administrador
+        user = users_collection.find_one({"_id": ObjectId(current_user_id)})
+        
+        if not user or user.get('role') != 'admin':  # Permitir apenas admins verem outros agendamentos
+            return jsonify({"msg": "Access forbidden: You can only view your own appointments"}), 403
 
     try:
         # Convertendo o user_id para ObjectId (caso esteja sendo passado como string)
@@ -161,24 +195,38 @@ def get_user_appointments(user_id):
             "date": appointment["date"].strftime("%Y-%m-%d %H:%M:%S"),
             "status": appointment["status"]
         })
+    
     if not appointments_list:
         return jsonify({"msg": "No appointments found for this user", "appointments": []}), 200
 
     return jsonify(appointments=appointments_list), 200
 
 
+
 # Rota para buscar todos os barbeiros
 @bp.route('/barbers', methods=['GET'])
 @jwt_required()
 def get_barbers():
-    current_user = get_jwt_identity()
-    role = current_user['role']
+    # Obtém o ID do usuário autenticado do token
+    user_id = get_jwt_identity()
+    
+    # Buscar o usuário no banco de dados
+    user = app.db.users.find_one({"_id": ObjectId(user_id)})
+    
+    if user is None:
+        return jsonify({"msg": "User not found"}), 404
+    
+    # Acessar o role do usuário
+    role = user.get('role')
 
-    if role != 'user':  # Apenas usuários podem ver os barbeiros
+    # Verificar se o usuário tem permissão
+    if role != 'user':  # Apenas usuários comuns podem acessar os barbeiros
         return jsonify({"msg": "Access forbidden: Insufficient permissions"}), 403
     
-    barbers = users_collection.find({"role": "barber"})
+    # Buscar todos os barbeiros no banco de dados
+    barbers = app.db.users.find({"role": "barber"})
     
+    # Preparar a lista de barbeiros
     barbers_list = []
     for barber in barbers:
         barber_data = {
@@ -194,16 +242,17 @@ def get_barbers():
 @bp.route('/check_role', methods=['GET'])
 @jwt_required()  # Protege a rota com a necessidade de autenticação
 def check_role():
-    # Obtém a identidade do usuário a partir do token JWT
-    current_user = get_jwt_identity()
-    
-    # Retorna o papel do usuário (role) ou uma mensagem de erro
-    if 'role' in current_user:
-        return jsonify({"role": current_user['role']}), 200
+    user_id = get_jwt_identity()  # Obtém o ID do usuário a partir do token JWT
+    print(f"User ID from token: {user_id}")  # Para depuração
+
+    # Buscar o usuário no banco de dados usando o ID
+    user = app.db.users.find_one({"_id": ObjectId(user_id)})
+
+    # Verificar se o usuário foi encontrado e se tem o campo 'role'
+    if user and 'role' in user:
+        return jsonify({"role": user['role']}), 200
     else:
         return jsonify({"msg": "User role not found"}), 400
-
-
 
 @bp.route('/register_barbers', methods=['GET'])
 def register_barbers():
@@ -229,3 +278,167 @@ def register_barbers():
             users_collection.insert_one(barber)
 
     return jsonify({"msg": "Barbers registered successfully!"}), 200
+
+
+
+
+
+
+
+@bp.route('/points', methods=['GET'])
+@jwt_required()
+def get_points():
+    user_id = get_jwt_identity()
+    user = users_collection.find_one({"_id": ObjectId(user_id)})
+
+    if not user:
+        return jsonify({"msg": "User not found"}), 404
+
+    points = user.get("points", 0)
+    return jsonify({"points": points}), 200
+
+
+from bson import ObjectId
+
+from pymongo.errors import PyMongoError
+
+@bp.route('/complete_appointment', methods=['POST'])
+@jwt_required()
+def complete_appointment():
+    # Recebe dados da requisição
+    data = request.get_json()
+    
+    # Verifica se os dados necessários estão presentes
+    if not data or 'appointment_id' not in data:
+        return jsonify({"msg": "Appointment ID is required"}), 400
+
+    appointment_id = data.get('appointment_id')
+    user_id = ObjectId(get_jwt_identity())
+
+    try:
+        # Busca o agendamento no banco de dados
+        appointment = appointments_collection.find_one({"_id": ObjectId(appointment_id)})
+        
+        # Verifica se o agendamento existe
+        if not appointment:
+            return jsonify({"msg": "Appointment not found"}), 404
+
+        # Verifica se o agendamento já foi completado
+        if appointment['status'] == 'completed':
+            return jsonify({"msg": "This appointment has already been completed."}), 400
+
+        # Verifica se o barbeiro que está tentando completar o agendamento é o responsável
+        if ObjectId(appointment['barber_id']) != user_id:
+            return jsonify({"msg": "You can only complete your own appointments"}), 403
+
+        # Atualiza o status do agendamento para "completed"
+        appointments_collection.update_one(
+            {"_id": ObjectId(appointment_id)},
+            {"$set": {"status": "completed"}}
+        )
+
+        # Obtém o serviço relacionado ao agendamento
+        service = services_collection.find_one({"_id": appointment['service_id']})
+        
+        if not service:
+            return jsonify({"msg": "Service not found"}), 404
+
+        # Adiciona pontos ao usuário
+        points = service.get('value', 0)  # Pontos baseados no valor do serviço
+        users_collection.update_one({"_id": appointment['user_id']}, {"$inc": {"points": points}})
+
+        # Retorna resposta de sucesso
+        return jsonify({
+            "status": "success",
+            "msg": "Appointment completed and points added!"
+        }), 200
+
+    except PyMongoError as e:
+        # Em caso de erro com o MongoDB
+        return jsonify({"msg": f"Database error: {str(e)}"}), 500
+    except Exception as e:
+        # Em caso de erro geral
+        return jsonify({"msg": f"Unexpected error: {str(e)}"}), 500
+
+
+@bp.route('/redeem_free_service', methods=['POST'])
+@jwt_required()
+def redeem_free_service():
+    user_id = get_jwt_identity()
+    user = users_collection.find_one({"_id": ObjectId(user_id)})
+
+    if not user:
+        return jsonify({"msg": "User not found"}), 404
+
+    points = user.get("points", 0)
+
+    # Definir o número de pontos necessários para um serviço gratuito
+    required_points = 100
+
+    if points < required_points:
+        return jsonify({"msg": f"You need {required_points} points to redeem a free service"}), 400
+
+    # Mostrar os serviços disponíveis para resgatar
+    services = services_collection.find()
+    services_list = []
+
+    for service in services:
+        services_list.append({
+            "_id": str(service["_id"]),
+            "name": service["name"],
+            "duration": service["duration"],
+            "value": service["value"]
+        })
+
+    return jsonify({"services": services_list}), 200
+
+
+@bp.route('/redeem_free_service/<service_id>', methods=['POST'])
+@jwt_required()
+def redeem_free_service_choice(service_id):
+    user_id = get_jwt_identity()
+    user = users_collection.find_one({"_id": ObjectId(user_id)})
+
+    if not user:
+        return jsonify({"msg": "User not found"}), 404
+
+    points = user.get("points", 0)
+    required_points = 100  # Definido como 100 pontos para resgatar um serviço
+
+    if points < required_points:
+        return jsonify({"msg": f"You need at least {required_points} points to redeem a service"}), 400
+
+    # Verificar se o serviço existe
+    service = services_collection.find_one({"_id": ObjectId(service_id)})
+    if not service:
+        return jsonify({"msg": "Service not found"}), 404
+
+    # Verificar se o valor do serviço é inferior ou igual aos pontos do usuário
+    service_value = service.get("value", 0)  # Valor do serviço
+    if service_value > points:
+        return jsonify({"msg": "You don't have enough points for this service"}), 400
+
+    # Subtrair os pontos do usuário, considerando o valor do serviço
+    users_collection.update_one(
+        {"_id": ObjectId(user_id)},
+        {"$inc": {"points": -service_value}}
+    )
+
+    # Recuperar o barber_id do corpo da requisição
+    barber_id = request.json.get("barber_id")  # O barber_id vem do corpo da requisição
+
+    if not barber_id:
+        return jsonify({"msg": "Barber ID is required"}), 400
+
+    # Criar o agendamento do serviço com o barber_id vindo da requisição
+    appointment_data = {
+        "user_id": ObjectId(user_id),
+        "barber_id": ObjectId(barber_id),  # Usando o barber_id recebido no corpo da requisição
+        "service_id": ObjectId(service_id),
+        "date": datetime.now(),  # Usando datetime.now() corretamente agora
+        "status": "scheduled"
+    }
+
+    appointments_collection.insert_one(appointment_data)
+
+    return jsonify({"msg": f"Service redeemed successfully! You used {service_value} points."}), 200

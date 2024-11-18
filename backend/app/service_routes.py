@@ -13,20 +13,21 @@ services_collection = app.db['services']
 def register_service():
     data = request.get_json()
     name = data.get('name')
-    duration = data.get('duration')  # Duração do serviço, deve ser 30 ou 60
-    value = data.get('value')  # Valor do serviço
+    duration = data.get('duration')
+    value = data.get('value')
+    points = data.get('points', 0)  # Adicionar pontos ao serviço
 
     if not name or not duration or not value:
-        return jsonify({"msg": "Name, duration, and value are required"}), 400
+        return jsonify({"msg": "Name, duration, value, and points are required"}), 400
 
     if duration not in [30, 60]:
         return jsonify({"msg": "Duration must be either 30 or 60 minutes"}), 400
 
-    # Inserir o novo serviço na coleção
     services_collection.insert_one({
         "name": name,
         "duration": duration,
-        "value": value
+        "value": value,
+        "points": points  # Adiciona pontos ao serviço
     })
     
     return jsonify({"msg": "Service registered successfully!"}), 201
@@ -55,25 +56,26 @@ def get_services():
             "_id": str(service["_id"]),
             "name": service["name"],
             "duration": service["duration"],
-            "value": service["value"]
+            "value": service["value"],
+            "points": service.get("points", 0)  # Incluir pontos ao buscar os serviços
         })
     
     return jsonify(services=services_list), 200
 
 @bp.route('/register_services', methods=['GET'])
 def register_services():
-    # Lista de serviços hardcoded
+    # Lista de serviços hardcoded com pontos
     services = [
-        {"name": "Corte de Cabelo Masculino", "duration": 30, "value": 30},
-        {"name": "Corte de Cabelo Feminino", "duration": 60, "value": 50},
-        {"name": "Barba", "duration": 30, "value": 20},
-        {"name": "Corte e Barba", "duration": 60, "value": 40},
-        {"name": "Design de Sobrancelha", "duration": 30, "value": 25},
-        {"name": "Corte de Cabelo Infantil", "duration": 30, "value": 35},
-        {"name": "Escova e Penteado", "duration": 60, "value": 70},
-        {"name": "Tratamento Capilar", "duration": 60, "value": 80},
-        {"name": "Manicure e Pedicure", "duration": 60, "value": 45},
-        {"name": "Depilação", "duration": 30, "value": 20}
+        {"name": "Corte de Cabelo Masculino", "duration": 30, "value": 30, "points": 10},
+        {"name": "Corte de Cabelo Feminino", "duration": 60, "value": 50, "points": 15},
+        {"name": "Barba", "duration": 30, "value": 20, "points": 5},
+        {"name": "Corte e Barba", "duration": 60, "value": 40, "points": 12},
+        {"name": "Design de Sobrancelha", "duration": 30, "value": 25, "points": 8},
+        {"name": "Corte de Cabelo Infantil", "duration": 30, "value": 35, "points": 10},
+        {"name": "Escova e Penteado", "duration": 60, "value": 70, "points": 20},
+        {"name": "Tratamento Capilar", "duration": 60, "value": 80, "points": 25},
+        {"name": "Manicure e Pedicure", "duration": 60, "value": 45, "points": 15},
+        {"name": "Depilação", "duration": 30, "value": 20, "points": 5}
     ]
 
     # Inserir os serviços no banco de dados

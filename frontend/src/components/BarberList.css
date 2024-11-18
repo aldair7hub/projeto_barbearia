@@ -1,0 +1,59 @@
+/* Estilos para o container principal */
+.barber-list-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* Centraliza verticalmente */
+    align-items: center; /* Centraliza horizontalmente */
+    min-height: 100vh; /* O container ocupa toda a altura da janela */
+    padding: 20px;
+    background-color: #f4f4f9; /* Fundo claro */
+  }
+  
+  /* Estilo do título */
+  .barber-list-container h3 {
+    font-size: 28px;
+    color: #2c3e50;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+  
+  /* Estilos para a lista de barbeiros */
+  .barber-list {
+    list-style-type: none; /* Remove os marcadores da lista */
+    padding: 0;
+    margin: 0;
+    width: 100%; /* Ocupará toda a largura disponível */
+    max-width: 600px; /* Largura máxima para manter a lista mais compacta */
+    background-color: #fff; /* Fundo branco para os itens da lista */
+    border-radius: 8px; /* Bordas arredondadas */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Sombra suave */
+    overflow: hidden; /* Para garantir que os itens não ultrapassem o container */
+  }
+  
+  /* Estilos para cada item da lista de barbeiros */
+  .barber-item {
+    padding: 15px 20px; /* Espaçamento interno dos itens */
+    font-size: 18px;
+    color: #333;
+    cursor: pointer; /* Muda o cursor ao passar sobre o item */
+    border-bottom: 1px solid #ddd; /* Linha entre os itens */
+    transition: background-color 0.3s ease; /* Transição suave ao passar o mouse */
+  }
+  
+  .barber-item:hover {
+    background-color: #f0f0f0; /* Cor de fundo ao passar o mouse */
+  }
+  
+  /* Último item sem a borda inferior */
+  .barber-item:last-child {
+    border-bottom: none;
+  }
+  
+  /* Mensagem de erro */
+  .error-message {
+    color: red;
+    font-size: 16px;
+    margin-top: 20px;
+    text-align: center;
+  }
+  

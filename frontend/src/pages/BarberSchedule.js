@@ -1,21 +1,24 @@
+// BarberSchedule.js
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { getBarberAppointments, getServices, createAppointment } from '../services/api';
-import DatePicker from 'react-datepicker';
-import "react-datepicker/dist/react-datepicker.css";
+import { getBarberAppointments, getServices, createAppointment, getUserPoints, redeemFreeServiceChoice } from '../services/api';
+import BarberCalendar from '../components/BarberCalendar'; // Importando o novo componente
 import './BarberSchedule.css';
 
 const BarberSchedule = () => {
-  const { barberId } = useParams(); // Pega o ID do barbeiro da URL
-  const { state } = useLocation(); // Pega o state passado na navegação
-  const { fullname } = state || {}; // Pega o fullname do barbeiro, se estiver disponível
+  const { barberId } = useParams();
+  const { state } = useLocation();
+  const { fullname } = state || {};
   const [appointments, setAppointments] = useState([]);
-  const [services, setServices] = useState([]); // Estado para armazenar os serviços
+  const [services, setServices] = useState([]);
   const [error, setError] = useState(null);
-  const [selectedDate, setSelectedDate] = useState(null); // Armazenar a data selecionada
-  const [selectedService, setSelectedService] = useState(""); // Armazenar o ID do serviço selecionado
-  const token = localStorage.getItem('token'); // Token do usuário
-  const navigate = useNavigate(); // Para navegação após o agendamento
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [selectedService, setSelectedService] = useState("");
+  const [points, setPoints] = useState(0);
+  const [isFreeService, setIsFreeService] = useState(false);
+  const [loadingPoints, setLoadingPoints] = useState(true);
+  const token = localStorage.getItem('token');
+  const navigate = useNavigate();
   const userID = localStorage.getItem('user_id');
 
   useEffect(() => {
@@ -24,18 +27,18 @@ const BarberSchedule = () => {
         setError('Token não encontrado. Faça login novamente.');
         return;
       }
-
+    
       try {
         const data = await getBarberAppointments(token, barberId);
-        console.log('Data recebida: ', data); // Adicione um log para ver o que está sendo retornado
+       
         if (data.error) {
           setError(data.error);
         } else {
           setAppointments(data.appointments || []);
         }
       } catch (error) {
+        console.error('Erro ao carregar a agenda:', error);
         setError('Erro ao carregar a agenda. Tente novamente mais tarde.');
-        console.error('Erro:', error); // Adicione log do erro
       }
     };
 
@@ -46,22 +49,51 @@ const BarberSchedule = () => {
         setServices(serviceData.services || []);
       } catch (error) {
         setError('Erro ao carregar os serviços. Tente novamente mais tarde.');
-        console.error('Erro:', error); // Adicione log do erro
+        console.error('Erro:', error);
+      }
+    };
+
+    const fetchUserPoints = async () => {
+      if (!token) return;
+
+      try {
+        const data = await getUserPoints(token);
+        if (data.error) {
+          console.log('Erro ao buscar pontos:', data.error);
+        } else {
+          setPoints(data.points); // Atualiza o estado com os pontos
+        }
+      } catch (error) {
+        console.error('Erro ao buscar pontos do usuário:', error);
+      } finally {
+        setLoadingPoints(false);
       }
     };
 
     fetchAppointments();
     fetchServices();
+    fetchUserPoints();
   }, [barberId, token]);
 
-  // Filtrando os horários já agendados para desabilitar esses horários
+  // Calcula os horários ocupados
+  // Calcula os horários ocupados
   const bookedTimes = appointments.map(appointment => {
-    const date = new Date(appointment.date);
+    const date = new Date(appointment.date);  // Converter para Date
+    if (isNaN(date)) {
+      console.error('Data inválida no agendamento:', appointment.date);
+      return null;
+    }
+
+    // Formatar o horário de maneira legível (HH:mm)
+    const hours = date.getHours();
+    const minutes = date.getMinutes();
+    const formattedTime = `${hours}:${minutes < 10 ? '0' : ''}${minutes}`;  // Ex: 17:30
+
     return {
-      date: date.toDateString(), // Data sem o horário
-      time: date.getHours() * 60 + date.getMinutes(), // Horário em minutos
+      date: date.toDateString(), // Data no formato "Sun Nov 17 2024"
+      time: formattedTime, // Horário no formato "HH:mm"
     };
-  });
+  }).filter(item => item !== null); // Remover valores nulos
 
   const handleConfirmAppointment = async () => {
     if (!selectedDate || !selectedService) {
@@ -69,93 +101,89 @@ const BarberSchedule = () => {
       return;
     }
 
-    // Formatar a data para o formato "YYYY-MM-DD HH:MM:SS"
     const formattedDate = selectedDate.toISOString().slice(0, 19).replace('T', ' ');
 
-    try {
-      // Verificar se já existe um agendamento no horário selecionado
-      const isDateTaken = appointments.some((appointment) => appointment.date === formattedDate);
-      if (isDateTaken) {
-        setError('Já existe um agendamento para este horário.');
-        return;
-      }
+    const isDateTaken = appointments.some((appointment) => appointment.date === formattedDate);
+    if (isDateTaken) {
+      setError('Já existe um agendamento para este horário.');
+      return;
+    }
 
-      // Crie o agendamento com os dados necessários
-      const appointmentData = {
-        date: formattedDate, // Enviando a data formatada
-        service_id: selectedService, // Enviar o ID do serviço
-        barber_id: barberId, // Usando o ID do barbeiro
-      };
+    const appointmentData = {
+      date: formattedDate,
+      service_id: selectedService,
+      barber_id: barberId,
+    };
 
-      if (!token) {
-        setError('Token não encontrado. Faça login novamente.');
-        return;
+    if (isFreeService) {
+      try {
+        const data = await redeemFreeServiceChoice(token, selectedService, barberId);
+        if (data.error) {
+          setError('Erro ao resgatar o serviço gratuito.');
+        } else {
+          alert('Serviço gratuito resgatado com sucesso!');
+          setSelectedDate(null);
+          setSelectedService('');
+          navigate(`/appointments/${userID}`);
+        }
+      } catch (error) {
+        setError('Erro ao resgatar o serviço gratuito.');
       }
-
-      const data = await createAppointment(token, appointmentData); // Passando o token para a função
-      if (data.error) {
-        setError(data.error);
-      } else {
-        // Agendamento criado com sucesso
-        setSelectedDate(null);
-        setSelectedService(""); // Resetar para string vazia
-        alert('Agendamento realizado com sucesso!');
-        navigate(`/appointments/${userID}`);
+    } else {
+      try {
+        const data = await createAppointment(token, appointmentData);
+        if (data.error) {
+          setError(data.error);
+        } else {
+          alert('Agendamento realizado com sucesso!');
+          setSelectedDate(null);
+          setSelectedService('');
+          navigate(`/appointments/${userID}`);
+        }
+      } catch (error) {
+        setError('Erro ao criar o agendamento. Tente novamente mais tarde.');
       }
-    } catch (error) {
-      setError('Erro ao criar o agendamento. Tente novamente mais tarde.');
-      console.error('Erro:', error);
     }
   };
 
+  // Calculando o número de serviços gratuitos disponíveis
+  const freeServicesAvailable = Math.floor(points / 100); // Cada 100 pontos dá direito a 1 serviço gratuito
+
   return (
     <div>
-      <h3>Agenda do Barbeiro: {fullname}</h3> {/* Mostrar o fullname se disponível */}
-      {error && (
-        <div className="alert alert-danger" style={{ color: 'red' }}>
-          {error}
+      <h3>Agenda do Barbeiro: {fullname}</h3>
+      {error && <div className="alert alert-danger" style={{ color: 'red' }}>{error}</div>}
+
+      {/* Exibir quantos serviços gratuitos o usuário tem */}
+      {freeServicesAvailable > 0 && !isFreeService && (
+        <div className="center-container">
+          <p>Você tem {freeServicesAvailable} serviço(s) gratuito(s) disponível(is).</p>
+          <button 
+            onClick={() => setIsFreeService(true)} 
+            className="redeem-btn"
+            disabled={freeServicesAvailable === 0}
+          >
+            Confirmar uso de serviço gratuito
+          </button>
         </div>
       )}
-      
-      {/* Exibir o calendário */}
-      <h4>Escolha uma data e horário:</h4>
-      <DatePicker
-        selected={selectedDate}
-        onChange={(date) => setSelectedDate(date)}
-        showTimeSelect
-        timeIntervals={30} // Intervalo de 30 minutos
-        dateFormat="Pp"
-        minDate={new Date()} // Não permitir datas no passado
-        filterDate={(date) => {
-          if (!selectedDate) return true; // Se selectedDate for null, permita todas as datas
 
-          const selectedDateString = selectedDate.toDateString(); // Pegue a data selecionada
-          const selectedTimeInMinutes = selectedDate.getHours() * 60 + selectedDate.getMinutes();
+      {/* Componente BarberCalendar */}
+      <div className="center-container">
+        <BarberCalendar
+          selectedDate={selectedDate}
+          setSelectedDate={setSelectedDate}
+          bookedTimes={bookedTimes}
+        />
+      </div>
 
-          // Desabilitar se o horário da data já foi agendado
-          return !bookedTimes.some(booking => booking.date === selectedDateString && booking.time === selectedTimeInMinutes);
-        }}
-        filterTime={(time) => {
-          // Verifique se o horário já está reservado para a data selecionada
-          const timeInMinutes = time.getHours() * 60 + time.getMinutes();
-          const selectedDateString = selectedDate ? selectedDate.toDateString() : '';
-          const isTimeBooked = bookedTimes.some(booking => 
-            booking.date === selectedDateString && booking.time === timeInMinutes
-          );
-          
-          // Desabilite a hora se estiver reservada
-          return !isTimeBooked;
-        }}
-        placeholderText="Escolha uma data"
-        disabledKeyboardNavigation // Desabilitar navegação com o teclado
-        customTimeInput={<input style={{ backgroundColor: 'lightgrey' }} />} // Adiciona estilo visual de bloqueio
-      />
-
-      {/* Mostrar os serviços disponíveis após escolher uma data */}
       {selectedDate && (
-        <div>
+        <div className="center-container">
           <h4>Escolha um serviço:</h4>
-          <select onChange={(e) => setSelectedService(e.target.value)} value={selectedService}>
+          <select 
+            onChange={(e) => setSelectedService(e.target.value)} 
+            value={selectedService}
+          >
             <option value="">Selecione um serviço</option>
             {services.map((service) => (
               <option key={service._id} value={service._id}>
@@ -166,12 +194,16 @@ const BarberSchedule = () => {
         </div>
       )}
 
-      {/* Confirmar agendamento */}
-      <button className="submit-btn" onClick={handleConfirmAppointment} disabled={!selectedDate || !selectedService}>
-        Confirmar Agendamento
-      </button>
+      {/* Botão de confirmação */}
+      <div className="center-container">
+        <button
+          className="submit-btn"
+          onClick={handleConfirmAppointment}
+          disabled={!selectedDate || !selectedService}>
+          Confirmar Agendamento
+        </button>
+      </div>
 
-      {/* Exibir a data e o horário selecionados */}
       {selectedDate && (
         <div>
           <p>Data e horário selecionados: {selectedDate.toLocaleString()}</p>

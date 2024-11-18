@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { getBarbers } from '../services/api';
 import { useNavigate } from 'react-router-dom'; // Para navegação
+import './BarberList.css'
 
 const BarberList = () => {
   const [barbers, setBarbers] = useState([]);

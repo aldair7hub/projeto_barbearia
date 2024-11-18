@@ -18,7 +18,6 @@ const AppointmentList = () => {
     try {
       // Verifica se a URL está sendo formada corretamente
       const response = await getUserAppointments(token, userID); // Passa userID para a requisição corretamente
-      console.log("response", response)
       if (response.error) {
         setError(response.error);
       } else {
