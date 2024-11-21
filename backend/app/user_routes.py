@@ -302,7 +302,7 @@ from bson import ObjectId
 
 from pymongo.errors import PyMongoError
 
-@bp.route('/complete_appointment', methods=['POST'])
+@bp.route('/complete_appointment', methods=['PUT'])
 @jwt_required()
 def complete_appointment():
     # Recebe dados da requisição

@@ -4,8 +4,6 @@ import './AppointmentDetails.css';
 
 const AppointmentDetails = ({ appointment }) => {
   const { service_name, service_duration, user_name, service_value, date, status, _id } = appointment;
-
-  const [setResponseStatus] = useState('');
   
   // Estado para controlar se o serviço foi concluído
   const [isCompleted, setIsCompleted] = useState(false);
@@ -22,20 +20,17 @@ const AppointmentDetails = ({ appointment }) => {
       if (response.status === 'success') {
         // Exibe o alert de sucesso
         alert(response.msg);  // Alerta de sucesso
-        setResponseStatus('success');
         
         // Marca o agendamento como completado e esconde o botão
         setIsCompleted(true);
       } else {
         // Exibe o alert de erro
         alert(response.msg || 'Houve um erro desconhecido.');  // Alerta de erro
-        setResponseStatus('error');
       }
     } catch (error) {
       console.error('Erro ao concluir o agendamento:', error);
       // Exibe o alert de erro
       alert('Houve um erro ao concluir o agendamento.');  // Alerta de erro
-      setResponseStatus('error');
     }
   };
   

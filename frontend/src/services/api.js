@@ -144,7 +144,7 @@ export const redeemFreeServiceChoice = (token, serviceId, barberID) => {
 
 export const completeAppointmentAndGetPoints = async (token, appointmentId) => {
   // Chama a função genérica postRequest com os parâmetros apropriados
-  const response = await postRequest(
+  const response = await putRequest(
     '/user/complete_appointment', 
     { appointment_id: appointmentId }, 
     token
